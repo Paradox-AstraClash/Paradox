@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Space Invaders Leaderboard · Paradox</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .lb { max-width: 480px; margin: 0 auto; }
+    .lb h2 { text-align: center; margin-bottom: 4px; }
+    .lb .sub { text-align: center; color: var(--muted); margin-bottom: 24px; font-size: 0.9rem; }
+    .lb-table { width: 100%; border-collapse: collapse; }
+    .lb-table th, .lb-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line); }
+    .lb-table th { color: var(--muted); font-weight: 500; font-size: 0.8rem; }
+    .lb-table tr:first-child td { color: var(--gold); font-weight: 600; }
+    .lb-table .rank { width: 40px; color: var(--muted); }
+    .lb-table .score { text-align: right; font-variant-numeric: tabular-nums; }
+    .empty { text-align: center; color: var(--muted); padding: 40px 0; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="user" href="profile.html">
+        <span class="avatar" aria-hidden="true"></span>
+        <span class="user-text">
+          <span class="user-name" id="user-name">…</span>
+          <span class="user-handle" id="user-handle">@…</span>
+        </span>
+      </a>
+      <a class="brand" href="../index.html"><i data-lucide="ghost"></i><span>Paradox</span></a>
+      <a class="coins" href="store.html" title="Your coins"><i data-lucide="coins"></i><span id="coin-count">0</span></a>
+    </div>
+  </header>
+
+  <main class="wrap lb">
+    <h2>👾 Space Invaders</h2>
+    <p class="sub">Top scores · all time</p>
+    <table class="lb-table">
+      <thead>
+        <tr><th class="rank">#</th><th>Player</th><th class="score">Score</th></tr>
+      </thead>
+      <tbody id="rows">
+        <tr><td colspan="3" class="empty">Loading…</td></tr>
+      </tbody>
+    </table>
+    <p style="text-align:center; margin-top:24px;">
+      <a class="btn" href="games/space-invaders.html">Play</a>
+      <a class="btn" href="arcade.html" style="margin-left:8px;">Arcade</a>
+    </p>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/supabase-client.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="../js/main.js"></script>
+  <script>
+    (async () => {
+      const tbody = document.getElementById('rows');
+      const { data, error } = await Paradox.getLeaderboard('space-invaders', 25);
+      if (error) {
+        tbody.innerHTML = `<tr><td colspan="3" class="empty">${error.message}</td></tr>`;
+        return;
+      }
+      if (!data || !data.length) {
+        tbody.innerHTML = `<tr><td colspan="3" class="empty">No scores yet. Be the first!</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = data.map((row, i) => {
+        const name = row.profiles?.display_name || row.profiles?.handle || 'Unknown';
+        const handle = row.profiles?.handle ? '@' + row.profiles.handle : '';
+        return `<tr>
+          <td class="rank">${i + 1}</td>
+          <td>${name} <span style="color:var(--muted);font-size:0.85em">${handle}</span></td>
+          <td class="score">${row.score.toLocaleString()}</td>
+        </tr>`;
+      }).join('');
+    })();
+  </script>
+</body>
+</html>
