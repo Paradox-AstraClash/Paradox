@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Paradox</title>
+  <meta name="description" content="Paradox: chat, games, art, and a community store.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="user" href="pages/profile.html">
+        <span class="avatar" aria-hidden="true"></span>
+        <span class="user-text">
+          <span class="user-name" id="user-name">Atticus</span>
+          <span class="user-handle" id="user-handle">@owner</span>
+        </span>
+      </a>
+      <a class="brand" href="index.html"><i data-lucide="ghost"></i><span>Paradox</span></a>
+      <a class="coins" href="pages/store.html" title="Your coins"><i data-lucide="coins"></i><span id="coin-count">0</span></a>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <h1 class="section-label">Navigation</h1>
+    <nav class="grid" aria-label="Main">
+      <a class="card" href="pages/art-gallery.html"><span class="icon" style="--a:#6d8bff;--b:#3b5bf0"><i data-lucide="palette"></i></span><strong>Art Gallery</strong><small>Share &amp; discover art</small></a>
+      <a class="card" href="pages/the-void.html"><span class="icon" style="--a:#8b2fd6;--b:#5a1a9c"><i data-lucide="tornado"></i></span><strong>The Void</strong><small>Public chat</small></a>
+      <a class="card" href="pages/direct-messages.html"><span class="icon" style="--a:#3b82f6;--b:#5b4be8"><i data-lucide="message-circle"></i></span><strong>Direct Messages</strong><small>Private conversations</small></a>
+      <a class="card" href="pages/arcade.html"><span class="icon" style="--a:#22c55e;--b:#0d9560"><i data-lucide="gamepad-2"></i></span><strong>Arcade</strong><small>Play &amp; earn coins</small></a>
+      <a class="card" href="pages/player-games.html"><span class="icon" style="--a:#d946ef;--b:#a21caf"><i data-lucide="gamepad"></i></span><strong>Player Games</strong><small>Community games</small></a>
+      <a class="card" href="pages/store.html"><span class="icon" style="--a:#fbbf24;--b:#f97316"><i data-lucide="shopping-cart"></i></span><strong>Store</strong><small>Spend your coins</small></a>
+      <a class="card" href="pages/leaderboard.html"><span class="icon" style="--a:#f5a30b;--b:#d97706"><i data-lucide="trophy"></i></span><strong>Leaderboard</strong><small>Top players</small></a>
+      <a class="card" href="pages/paradox-ai.html"><span class="icon" style="--a:#0ea5e9;--b:#2563eb"><i data-lucide="bot"></i></span><strong>Paradox AI</strong><small>AI assistant</small></a>
+      <a class="card" href="pages/library.html"><span class="icon" style="--a:#ec4899;--b:#e11d48"><i data-lucide="library"></i></span><strong>Library</strong><small>Browse links</small></a>
+      <a class="card" href="pages/add-link.html"><span class="icon" style="--a:#14b8a6;--b:#0e8fb0"><i data-lucide="link"></i></span><strong>Add Link</strong><small>Submit a link</small></a>
+      <a class="card" href="pages/rules.html"><span class="icon" style="--a:#a855f7;--b:#7c3aed"><i data-lucide="book-open"></i></span><strong>Rules</strong><small>Community rules</small></a>
+    </nav>
+
+    <footer class="footer">
+      <a href="pages/bug-report.html"><i data-lucide="bug"></i>Bug Report</a>
+      <a href="pages/feature-request.html"><i data-lucide="lightbulb"></i>Feature Request</a>
+    </footer>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
