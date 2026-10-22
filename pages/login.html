@@ -6,7 +6,134 @@
   <title>Sign in · Paradox</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · Paradox</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .auth { max-width: 380px; margin: 0 auto; padding: 32px 16px 56px; }
+    .auth-brand { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 24px; font-size: 20px; font-weight: 700; }
+    .auth-brand svg { color: var(--accent); }
+    .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; margin-bottom: 20px; background: #0f0f1a; border: 1px solid var(--line); border-radius: 12px; }
+    .tabs button { padding: 10px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); font: 700 14px Roboto, sans-serif; cursor: pointer; }
+    .tabs button[aria-selected="true"] { background: #2a1646; color: #fff; }
+    form { display: flex; flex-direction: column; gap: 14px; }
+    label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #b9b9c9; }
+    label small { color: var(--muted); font-size: 12px; }
+    input { padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--card); color: #fff; font: 400 15px Roboto, sans-serif; }
+    input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+    .signup-only[hidden] { display: none; }
+    .submit { margin-top: 4px; padding: 13px; border: 0; border-radius: 10px; background: linear-gradient(90deg, #c15bff, #7c3aed); color: #fff; font: 700 15px Roboto, sans-serif; cursor: pointer; }
+    .submit:disabled { opacity: .6; cursor: wait; }
+    .note { min-height: 1.4em; margin: 0; font-size: 14px; text-align: center; }
+    .note.err { color: #f87171; }
+    .note.ok { color: #4ade80; }
+    .guest { display: block; margin-top: 18px; text-align: center; font-size: 13px; color: var(--muted); }
+    .guest:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+  <main class="auth">
+    <div class="auth-brand"><i data-lucide="ghost"></i><span>Paradox</span></div>
+
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" id="tab-in" aria-selected="true">Sign in</button>
+      <button type="button" role="tab" id="tab-up" aria-selected="false">Create account</button>
+    </div>
+
+    <form id="form" novalidate>
+      <label>Username
+        <input id="username" autocomplete="username" maxlength="20" autocapitalize="none" spellcheck="false" placeholder="Username">
+        <small class="signup-only" hidden>3 to 20 characters: lowercase letters, numbers, underscores. Must be unique.</small>
+      </label>
+      <label class="signup-only" hidden>Display name
+        <input id="display" autocomplete="nickname" maxlength="30" placeholder="Display name">
+        <small>This is what others see. It can match someone else's.</small>
+      </label>
+      <label>Password
+        <input id="password" type="password" autocomplete="current-password" required minlength="6" placeholder="At least 6 characters">
+      </label>
+      <button class="submit" id="submit" type="submit">Sign in</button>
+      <p class="note" id="note" role="status" aria-live="polite"></p>
+    </form>
+
+    <a class="guest" href="../index.html">Continue as guest</a>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/supabase-client.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script>
+    // Supabase Auth requires an email, so we derive a private one from the username.
+    // Nothing is ever sent to it. Keep this the same forever or existing users can't sign in.
+    const EMAIL_DOMAIN = 'paradox-users.com';
+    const toEmail = u => u + '@' + EMAIL_DOMAIN;
+
+    const $ = id => document.getElementById(id);
+    let mode = 'in';
+
+    function setMode(m) {
+      mode = m;
+      $('tab-in').setAttribute('aria-selected', m === 'in');
+      $('tab-up').setAttribute('aria-selected', m === 'up');
+      document.querySelectorAll('.signup-only').forEach(el => el.hidden = m !== 'up');
+      $('submit').textContent = m === 'in' ? 'Sign in' : 'Create account';
+      $('password').autocomplete = m === 'in' ? 'current-password' : 'new-password';
+      note('');
+    }
+    function note(text, kind) {
+      const n = $('note'); n.textContent = text; n.className = 'note' + (kind ? ' ' + kind : '');
+    }
+    function friendly(err) {
+      const m = (err.message || '').toLowerCase();
+      if (m.includes('invalid login')) return 'Wrong username or password.';
+      if (m.includes('already registered') || m.includes('already been registered')) return 'That username is taken. Pick another one.';
+      if (m.includes('database error')) return 'That username is taken or invalid. Pick another one.';
+      if (m.includes('email not confirmed')) return 'Sign-ups need "Confirm email" turned off in Supabase.';
+      if (m.includes('password')) return 'Password must be at least 6 characters.';
+      if (m.includes('rate limit')) return 'Too many attempts. Wait a minute and try again.';
+      return err.message || 'Something went wrong. Try again.';
+    }
+
+    $('tab-in').onclick = () => setMode('in');
+    $('tab-up').onclick = () => setMode('up');
+
+    $('form').onsubmit = async e => {
+      e.preventDefault();
+      const username = $('username').value.trim().toLowerCase(), password = $('password').value;
+      if (!username || !password) return note('Enter your username and password.', 'err');
+      if (!/^[a-z0-9_]{3,20}$/.test(username)) return note('Username must be 3 to 20 lowercase letters, numbers, or underscores.', 'err');
+
+      let display;
+      if (mode === 'up') {
+        display = $('display').value.trim();
+        if (!display) return note('Enter a display name.', 'err');
+      }
+
+      $('submit').disabled = true; note(mode === 'in' ? 'Signing in...' : 'Creating account...');
+      const email = toEmail(username);
+      const { data, error } = mode === 'in'
+        ? await Paradox.signIn(email, password)
+        : await Paradox.signUp(email, password, username, display);
+      $('submit').disabled = false;
+
+      if (error) return note(friendly(error), 'err');
+      if (mode === 'up' && !data.session) return note('Account created, but Supabase still requires email confirmation. Turn off "Confirm email" in Authentication settings.', 'err');
+      location.href = '../index.html';
+    };
+
+    // Already signed in? Skip the form.
+    Paradox.getSession().then(s => { if (s) location.href = '../index.html'; });
+    if (window.lucide) lucide.createIcons();
+  </script>
+</body>
+</html>.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/style.css">
   <style>
     .auth { max-width: 380px; margin: 0 auto; padding: 32px 16px 56px; }
