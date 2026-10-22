@@ -174,3 +174,7 @@ canvas.hd { max-width: 100%; height: auto !important; }
 .uh .uc:not(.no):hover { transform: translateY(-8px); } .uc.no { opacity: .4; cursor: not-allowed; }
 .ucol { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #fff; }
 .upk { display: flex; gap: 10px; } .upk button { width: 44px; height: 44px; border-radius: 50%; border: 3px solid #fff; background: var(--c); cursor: pointer; }
+
+/* signed-out state of the top-right pill */
+.coins.signin { background: linear-gradient(90deg, #c15bff, #7c3aed); border-color: transparent; color: #fff; }
+.coins.signin:hover { filter: brightness(1.1); }
