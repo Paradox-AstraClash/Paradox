@@ -30,18 +30,80 @@ async function getUser() {
   return user;
 }
 
-async function signUp(email, password, handle, displayName) {
+/** Internal email used by Supabase Auth (users never see this). */
+function authEmailFromHandle(handle) {
+  const h = String(handle || '').toLowerCase().replace(/[^a-z0-9_]/g, '');
+  return h + '@example.com';
+}
+
+/** Normalize username: lowercase, letters/numbers/underscore only. */
+function normalizeHandle(handle) {
+  return String(handle || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+}
+
+/** Check if a username is already taken. */
+async function isHandleTaken(handle) {
+  const h = normalizeHandle(handle);
+  if (!h) return { taken: true, error: { message: 'Invalid username' } };
+  const { data, error } = await sb
+    .from('profiles')
+    .select('id')
+    .eq('handle', h)
+    .maybeSingle();
+  if (error) return { taken: false, error };
+  return { taken: !!data, error: null };
+}
+
+/**
+ * Sign up with username + password + display name (no email shown to user).
+ * Also accepts legacy call: signUp(email, password, handle, displayName).
+ */
+async function signUp(handleOrEmail, password, displayNameOrHandle, maybeDisplay) {
+  let h, display;
+  if (typeof handleOrEmail === 'string' && handleOrEmail.includes('@')) {
+    h = normalizeHandle(displayNameOrHandle || handleOrEmail.split('@')[0]);
+    display = (maybeDisplay && String(maybeDisplay).trim()) || h;
+  } else {
+    h = normalizeHandle(handleOrEmail);
+    display = (displayNameOrHandle && String(displayNameOrHandle).trim()) || h;
+  }
+
+  if (h.length < 3) {
+    return { data: null, error: { message: 'Username must be at least 3 characters (a-z, 0-9, _)' } };
+  }
+  if (!password || password.length < 6) {
+    return { data: null, error: { message: 'Password must be at least 6 characters' } };
+  }
+
+  try {
+    const { taken } = await isHandleTaken(h);
+    if (taken) return { data: null, error: { message: 'That username is already taken' } };
+  } catch (_) {}
+
+  const email = authEmailFromHandle(h);
   const { data, error } = await sb.auth.signUp({
     email,
     password,
     options: {
-      data: { handle, display_name: displayName || handle }
+      data: {
+        handle: h,
+        display_name: display
+      }
     }
   });
   return { data, error };
 }
 
-async function signIn(email, password) {
+/** Sign in with username + password (no email shown to user). */
+async function signIn(handleOrEmail, password) {
+  let email;
+  if (typeof handleOrEmail === 'string' && handleOrEmail.includes('@')) {
+    email = handleOrEmail.trim().toLowerCase();
+  } else {
+    const h = normalizeHandle(handleOrEmail);
+    if (!h) return { data: null, error: { message: 'Enter your username' } };
+    email = authEmailFromHandle(h);
+  }
   const { data, error } = await sb.auth.signInWithPassword({ email, password });
   return { data, error };
 }
@@ -89,7 +151,7 @@ async function addCoins(amount) {
     p_user_id: user.id,
     p_amount: amount
   });
-  return { data, error }; // data = new balance
+  return { data, error };
 }
 
 // ------------------------------------------------------------
@@ -169,7 +231,6 @@ function subscribeVoid(callback) {
       'postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'void_messages' },
       async (payload) => {
-        // fetch the joined profile so the UI has the handle
         const { data } = await sb
           .from('void_messages')
           .select(`id, content, created_at, profiles ( handle, display_name, avatar_url )`)
@@ -210,6 +271,8 @@ window.Paradox = {
   signUp,
   signIn,
   signOut,
+  normalizeHandle,
+  isHandleTaken,
   getProfile,
   getMyProfile,
   updateProfile,
