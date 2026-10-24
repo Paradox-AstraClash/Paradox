@@ -62,9 +62,6 @@
   <script src="../js/supabase-client.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
   <script>
-    const EMAIL_DOMAIN = 'example.com';
-    const toEmail = u => u + '@' + EMAIL_DOMAIN;
-
     const $ = id => document.getElementById(id);
     let mode = 'in';
 
@@ -92,7 +89,7 @@
       if (m.includes('email not confirmed')) return 'Turn off Confirm email in Supabase Authentication settings.';
       if (m.includes('password')) return 'Password must be at least 6 characters.';
       if (m.includes('rate limit')) return 'Too many attempts. Wait a minute and try again.';
-      if (m.includes('invalid') && m.includes('email')) return 'Signup config error — email domain must be example.com.';
+      if (m.includes('invalid') && m.includes('email')) return 'Signup config error: Supabase rejected the internal email domain. Change AUTH_EMAIL_DOMAIN in supabase-client.js.';
       return (err && err.message) || 'Something went wrong. Try again.';
     }
 
@@ -117,13 +114,12 @@
       $('submit').disabled = true;
       note(mode === 'in' ? 'Signing in…' : 'Creating account…');
 
-      const email = toEmail(username);
       let data, error;
       if (mode === 'in') {
-        const r = await Paradox.signIn(email, password);
+        const r = await Paradox.signIn(username, password);
         data = r.data; error = r.error;
       } else {
-        const r = await Paradox.signUp(email, password, username, display);
+        const r = await Paradox.signUp(username, password, display);
         data = r.data; error = r.error;
       }
 
