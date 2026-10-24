@@ -30,10 +30,16 @@ async function getUser() {
   return user;
 }
 
-/** Internal email used by Supabase Auth (users never see this). */
+/**
+ * Internal email used by Supabase Auth (users never see this).
+ * Supabase rejects example.com and domains that can't receive mail, so this must be
+ * a real domain with MX records. Pick it BEFORE anyone signs up: changing it later
+ * locks existing users out. Prefer a domain you own.
+ */
+const AUTH_EMAIL_DOMAIN = 'gmail.com';
 function authEmailFromHandle(handle) {
   const h = String(handle || '').toLowerCase().replace(/[^a-z0-9_]/g, '');
-  return h + '@example.com';
+  return h + '@' + AUTH_EMAIL_DOMAIN;
 }
 
 /** Normalize username: lowercase, letters/numbers/underscore only. */
