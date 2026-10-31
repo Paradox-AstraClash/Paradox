@@ -1,0 +1,8 @@
+{
+  "name": "paradox",
+  "private": true,
+  "description": "Paradox community site — static HTML on Vercel",
+  "dependencies": {
+    "@vercel/analytics": "^1.5.0"
+  }
+}
