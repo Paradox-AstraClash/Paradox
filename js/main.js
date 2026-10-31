@@ -6,6 +6,7 @@
  * Also loads Vercel Web Analytics when hosted on Vercel.
  */
 (function injectVercelAnalytics() {
+  // Official static-site snippet — only works on *.vercel.app / custom domains on Vercel
   window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
   var s = document.createElement('script');
   s.defer = true;
@@ -17,6 +18,7 @@
   if (window.Paradox && window.Paradox.refreshTopbar) {
     await window.Paradox.refreshTopbar();
   } else {
+    // Fallback while Supabase is not configured
     const set = (id, v) => {
       const el = document.getElementById(id);
       if (el) el.textContent = v;
