@@ -32,9 +32,7 @@ async function getUser() {
 
 /**
  * Internal email used by Supabase Auth (users never see this).
- * Supabase rejects example.com and domains that can't receive mail, so this must be
- * a real domain with MX records. Pick it BEFORE anyone signs up: changing it later
- * locks existing users out. Prefer a domain you own.
+ * Must match AstraClash (same Supabase project): gmail.com
  */
 const AUTH_EMAIL_DOMAIN = 'gmail.com';
 function authEmailFromHandle(handle) {
