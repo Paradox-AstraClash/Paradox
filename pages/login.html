@@ -23,7 +23,7 @@
     .signup-only[hidden] { display: none; }
     .submit { margin-top: 4px; padding: 13px; border: 0; border-radius: 10px; background: linear-gradient(90deg, #c15bff, #7c3aed); color: #fff; font: 700 15px Roboto, sans-serif; cursor: pointer; }
     .submit:disabled { opacity: .6; cursor: wait; }
-    .note { min-height: 1.4em; margin: 0; font-size: 14px; text-align: center; }
+    .note { min-height: 1.4em; margin: 0; font-size: 14px; text-align: center; word-break: break-word; }
     .note.err { color: #f87171; }
     .note.ok { color: #4ade80; }
     .guest { display: block; margin-top: 18px; text-align: center; font-size: 13px; color: var(--muted); }
@@ -62,6 +62,9 @@
   <script src="../js/supabase-client.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
   <script>
+    // Same domain as AstraClash (shared Supabase project)
+    const toEmail = username => username + '@gmail.com';
+
     const $ = id => document.getElementById(id);
     let mode = 'in';
 
@@ -77,20 +80,29 @@
 
     function note(text, kind) {
       const n = $('note');
-      n.textContent = text;
+      n.textContent = text || '';
       n.className = 'note' + (kind ? ' ' + kind : '');
     }
 
     function friendly(err) {
-      const m = (err && err.message || '').toLowerCase();
-      if (m.includes('invalid login')) return 'Wrong username or password.';
-      if (m.includes('already registered') || m.includes('already been registered')) return 'That username is taken. Pick another one.';
-      if (m.includes('database error')) return 'That username is taken or invalid. Pick another one.';
-      if (m.includes('email not confirmed')) return 'Turn off Confirm email in Supabase Authentication settings.';
-      if (m.includes('password')) return 'Password must be at least 6 characters.';
-      if (m.includes('rate limit')) return 'Too many attempts. Wait a minute and try again.';
-      if (m.includes('invalid') && m.includes('email')) return 'Signup config error: Supabase rejected the internal email domain. Change AUTH_EMAIL_DOMAIN in supabase-client.js.';
-      return (err && err.message) || 'Something went wrong. Try again.';
+      const raw = (err && err.message) ? String(err.message) : 'Something went wrong. Try again.';
+      const m = raw.toLowerCase();
+      if (m.includes('rate limit') || m.includes('too many')) {
+        return 'Too many attempts. Wait 15–60 minutes, then try once.';
+      }
+      if (m.includes('invalid login') || m.includes('invalid credentials')) {
+        return 'Wrong username or password.';
+      }
+      if (m.includes('already registered') || m.includes('already been registered') || m.includes('user already exists')) {
+        return 'That username is taken. Pick another one.';
+      }
+      if (m.includes('email not confirmed') || (m.includes('confirm') && m.includes('email'))) {
+        return 'Turn OFF “Confirm email” in Supabase → Authentication → Settings, then try again.';
+      }
+      if (m.includes('password') && m.includes('6')) {
+        return 'Password must be at least 6 characters.';
+      }
+      return raw;
     }
 
     $('tab-in').onclick = () => setMode('in');
@@ -105,30 +117,53 @@
         return note('Username must be 3–20 lowercase letters, numbers, or underscores.', 'err');
       }
 
-      let display;
+      let display = username;
       if (mode === 'up') {
         display = $('display').value.trim();
         if (!display) return note('Enter a display name.', 'err');
       }
 
+      if (!window.Paradox || !Paradox.sb) {
+        return note('Supabase not loaded. Check js/supabase-client.js and your internet.', 'err');
+      }
+
       $('submit').disabled = true;
       note(mode === 'in' ? 'Signing in…' : 'Creating account…');
 
+      const email = toEmail(username);
       let data, error;
-      if (mode === 'in') {
-        const r = await Paradox.signIn(username, password);
-        data = r.data; error = r.error;
-      } else {
-        const r = await Paradox.signUp(username, password, display);
-        data = r.data; error = r.error;
+
+      try {
+        if (mode === 'in') {
+          const r = await Paradox.sb.auth.signInWithPassword({ email, password });
+          data = r.data;
+          error = r.error;
+        } else {
+          const r = await Paradox.sb.auth.signUp({
+            email,
+            password,
+            options: {
+              data: {
+                handle: username,
+                display_name: display
+              }
+            }
+          });
+          data = r.data;
+          error = r.error;
+        }
+      } catch (ex) {
+        error = { message: ex.message || String(ex) };
       }
 
       $('submit').disabled = false;
 
       if (error) return note(friendly(error), 'err');
+
       if (mode === 'up' && data && !data.session) {
-        return note('Account created, but email confirmation is still on. Turn it OFF in Supabase → Authentication → Settings.', 'err');
+        return note('Account may exist, but you are not signed in. Turn OFF “Confirm email” in Supabase → Authentication → Settings, then sign in.', 'err');
       }
+
       location.href = '../index.html';
     };
 
