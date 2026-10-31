@@ -1,35 +1,30 @@
 /**
  * Paradox · shared UI bootstrap
- * Loads profile into the top bar. When signed out, the top-right coin pill
- * becomes a "Sign in" button that goes to login.html.
+ * Loads profile into the top bar (falls back to Guest when not signed in).
  * Requires supabase-client.js to be loaded first.
+ *
+ * Also loads Vercel Web Analytics when hosted on Vercel.
  */
-(async function () {
-  const link = document.getElementById('coins-link');
-  let session = null;
+(function injectVercelAnalytics() {
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+  var s = document.createElement('script');
+  s.defer = true;
+  s.src = '/_vercel/insights/script.js';
+  document.head.appendChild(s);
+})();
 
+(async function () {
   if (window.Paradox && window.Paradox.refreshTopbar) {
-    try {
-      session = await window.Paradox.getSession();
-      await window.Paradox.refreshTopbar();
-    } catch (e) { /* treat as signed out */ }
+    await window.Paradox.refreshTopbar();
   } else {
-    // Fallback while Supabase is not configured
     const set = (id, v) => {
       const el = document.getElementById(id);
       if (el) el.textContent = v;
     };
     set('user-name', 'Guest');
     set('user-handle', '@guest');
-  }
-
-  if (link && !session) {
-    link.href = link.dataset.login || 'pages/login.html';
-    link.removeAttribute('title');
-    link.classList.add('signin');
-    link.textContent = 'Sign in';
+    set('coin-count', '0');
   }
 
   if (window.lucide) lucide.createIcons();
-  if (link) link.style.visibility = 'visible';
 })();
